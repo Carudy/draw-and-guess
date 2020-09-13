@@ -1,42 +1,46 @@
-import pickle, select, socket, asyncore
+import pickle, socket, asyncore
 
-outgoing   =   []
-paints     =   []
+port       =   5659
+buff_size  =   4096
 
-class MainServer(asyncore.dispatcher):
-  def __init__(self, port):
-    asyncore.dispatcher.__init__(self)
-    self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.bind(('', port))
-    # print('Host name: ' + socket.gethostname())
-    self.listen(10)
+class Main_server(asyncore.dispatcher):
+    def __init__(self, port):
+        asyncore.dispatcher.__init__(self)
+        self.clients =   []
+        self.paints  =   []
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.bind(('', port))
+        self.listen(10)
     
-  def handle_accept(self):
-    conn, addr = self.accept()
-    print ('Connection address:' + addr[0] + " " + str(addr[1]))
-    outgoing.append(conn)
-    # conn.send(pickle.dumps(['id update', playerid]))
-    SecondaryServer(conn)
+    def handle_accept(self):
+        self.clients = [client for client in self.clients if not client._closed]
+        conn, addr = self.accept()
+        print ('Connection address:' + addr[0] + " " + str(addr[1]))
+        self.clients.append(conn)
+        Handler(conn)
 
-class SecondaryServer(asyncore.dispatcher_with_send):
-  def handle_read(self):
-    global paints, outgoing
-    try:
-        res = self.recv(4096)
-        if res:
-            cmd = pickle.loads(res)
-            if cmd[0] == 'up':
-                paints.append(cmd[1])
-                print('Received. up; ' + str(len(paints)))
-            elif cmd[0] == 'ask':
-                if cmd[1] < len(paints):
-                    for player in outgoing:
-                        player.send(pickle.dumps([cmd[1], paints[cmd[1]]]))
-                print('Received. ask; n: ' + str(cmd[1]))
-
-    except:
-        pass
+    def send_paint(self, x):
+        self.clients = [client for client in self.clients if not client._closed]
+        for player in self.clients:
+            player.send(pickle.dumps([x, self.paints[x]]))
 
 
-MainServer(4321)
+class Handler(asyncore.dispatcher_with_send):
+    def handle_read(self):
+        try:
+            res = self.recv(buff_size)
+            if res:
+                cmd = pickle.loads(res)
+                if cmd[0] == 'up':
+                    S.paints.append(cmd[1])
+                    print('Received. up; ' + str(len(S.paints)))
+                elif cmd[0] == 'ask':
+                    if cmd[1] < len(S.paints): S.send_paint(cmd[1])
+                    print('Received. ask; n: ' + str(cmd[1]))
+
+        except Exception as e:
+            print(e)
+
+
+S = Main_server(port)
 asyncore.loop()
