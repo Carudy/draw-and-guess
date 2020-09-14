@@ -37,9 +37,8 @@ class Player():
         self.pid        =   0
         self.paints     =   []
         self.canvas     =   Canvas()
-        self.dx         =   1040
-        self.dy         =   [20, 190, 380, 560, 740]
-        # self.y_pos      =   -1
+        self.dx         =   780
+        self.dy         =   [15, 180, 325, 480, 635]
         self.dis_names  =   [0] * 5
         self.dis_tps    =   [0] * 5
         self.dis_coins  =   [0] * 5
@@ -49,9 +48,8 @@ class Player():
         self.paints += points
         self.pid = y+1
 
-    def register(self, G, uid, place):
+    def register(self, G, uid):
         self.uid   =  uid
-        self.y_pos =  place
         G.s.send(pickle.dumps(['name', self.uid, self.name]))
         print('Your id: ', self.uid)
 
@@ -68,7 +66,7 @@ class Player():
             if data:
                 res = pickle.loads(data)
                 if   res[0] == 'reg':
-                    self.register(G, res[1], res[2])
+                    self.register(G, res[1])
                 elif res[0] == 'draw':
                     self.recv_paint(G, res[1], res[2], res[3:])
                 elif res[0] == 'full':
@@ -106,7 +104,7 @@ class Canvas():
         self.pt     =   0
 
     def yes_xy(self, pos):
-        return pos[0] >= 1 and pos[0] <= 1000 and pos[1] >= 60 and pos[1] <= 780
+        return pos[0] >= 1 and pos[0] <= 760 and pos[1] >= 50 and pos[1] <= 670
 
     def run(self, G):
         if self.yes_xy(G.mou_pos) and G.player.type == 0:
@@ -153,10 +151,10 @@ class GBV():
         pygame.mixer.pre_init(44100, 16, 2, 4096)
 
         # display
-        width, height = 1360, 900
+        width, height = 1024, 768
         pygame.display.init()
         pygame.display.set_caption("Game")
-        os.environ["SDL_VIDEO_WINDOW_POS"] = "%d, %d" % (250, 70)
+        os.environ["SDL_VIDEO_WINDOW_POS"] = "%d, %d" % (280, 120)
 
         self.size        =   (width, height)
         self.screen      =   pygame.display.set_mode(self.size, 0, 32)
@@ -165,13 +163,14 @@ class GBV():
         self.cd         =   dd(int)
         self.clock      =   pygame.time.Clock()
         self.player     =   Player(name)
-        self.tb         =   Textbox(250, 35, 30, 820)
-        self.bg         =   j_img('img/bg.jpg', 1360, 900)
-        self.info0      =   Label("未开始", pos=(75, 15)) 
-        self.info1      =   Label("未开始", pos=(720, 15)) 
-        self.btn_ok     =   Button(0, '确定!', pos=(300, 820), f=send_answer)
-        self.btn_re     =   Button(0, '重画', pos=(420, 820), f=re_draw)
-        self.btn_start  =   Button(0, '开始游戏', pos=(870, 820), f=want_play)
+        self.tb         =   Textbox(180, 35, 25, 700)
+        self.bg         =   j_img('img/bg.jpg', width, height)
+        self.info0      =   Label("未开始", pos=(20, 10)) 
+        self.info1      =   Label("未开始", pos=(400, 10)) 
+        self.name_label =   Label('玩家：{}'.format(self.player.name), pos=(360, 698)) 
+        self.btn_ok     =   Button(0, '猜', pos=(220, 698), f=send_answer)
+        self.btn_re     =   Button(0, '重画', pos=(260, 698), f=re_draw)
+        self.btn_start  =   Button(0, '开始游戏', pos=(600, 698), f=want_play)
 
     def set_info(self, x, y):
         if x==0:
@@ -187,6 +186,7 @@ class GBV():
         self.btn_ok.run(G)
         self.btn_re.run(G)
         self.btn_start.run(G)
+        self.name_label.run(G)
 
         self.player.run(G)
         self.tb.draw(G.screen)

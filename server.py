@@ -19,7 +19,7 @@ class God():
         self.readys     =   dd(int)
         print('Sever started.')
 
-        self.questions  =   [c for c in  re.split('[, \t]', open('cy', encoding='utf-8').read()) if len(c)]
+        self.questions  =   [c for c in  re.split('[, \t]', open('puzzle', encoding='utf-8').read()) if len(c)]
         
     def send_paint(self, uid, x):
         if self.clients[uid]._closed: return
@@ -57,11 +57,11 @@ class God():
         print ('New player: id:%d  display pos:%d' % (G.n_player, dp))
 
     def clean(self):
-        for i in self.clients:
-            if self.clients[i]._closed:
-                self.names[i] = ''
+        for u in self.clients:
+            if self.clients[u]._closed:
+                self.names[u] = ''
                 for j in range(5):
-                    if self.poses[j]==i:
+                    if self.poses[j]==u:
                         self.poses[j] = -1
                         break
 
@@ -82,10 +82,12 @@ class God():
         self.readys[uid] = 1
         self.clean()
         n = c = 0
-        for u in self.clients:
+        players = [u for u in self.clients if not self.clients[u]._closed]
+        for u in players:
             n += 1
             if self.readys[u]==1: c += 1
-        print(n, c)
+            print(self.names[u])
+        print('All:{}  Ready:{}'.format(n, c))
         if n>1 and n==c:
             self.start_game()
 
@@ -124,6 +126,7 @@ class God():
         self.status = 0
         self.clients[self.painter].send(pickle.dumps(['tp', 1]))
         time.sleep(0.05)
+        self.tps[self.painter] = -1
         self.painter = -1
         self.clean()
         for u in self.clients:
@@ -140,7 +143,8 @@ class God():
             self.redraw(self.painter)
             self.coins[self.painter] += 1
             self.coins[uid] += 1
-            self.broadcast(['info', 0, '{} 猜对了！'.format(self.names[uid])])
+            self.broadcast(['info', 0, '恭喜{}猜对了'.format(self.names[uid])])
+            self.broadcast(['info', 1, '按【开始】再来'])
             time.sleep(0.05)
             self.stop_game()
 

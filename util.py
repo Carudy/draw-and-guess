@@ -11,7 +11,7 @@ def p_img(file, w, h):
 def j_img(file, w, h):
     return pygame.transform.scale(pygame.image.load(file).convert(), (w, h))
 
-#******************* classes **************************   
+#******************* classes ************************** 
 class Bk():  # backgrounds
     def __init__(self, src, w, h):
         # self.bk=[src + f for f in os.listdir(src) if f.startswith('bk') and f.endswith(('jpg'))]
